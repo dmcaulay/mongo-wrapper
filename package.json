@@ -1,0 +1,16 @@
+{
+  "name": "mongo-wrapper",
+  "version": "0.0.0",
+  "description": "tiny wrapper around the native mongodb module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": "",
+  "author": "Dan McAulay & Jesse Ditson",
+  "license": "BSD",
+  "dependencies": {
+    "async-resource": "0.0.1",
+    "underscore": "~1.4.4"
+  }
+}
