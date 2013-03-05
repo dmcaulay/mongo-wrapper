@@ -42,8 +42,8 @@ CollectionWrapper.prototype.findArray = function() {
 }
 
 // sets up simple indexes based on the config object.
-var setupIndexes = function(db,callback){
-  if(!config.db.indexes) return callback()
+var setupIndexes = function(db,config,callback){
+  if(!config.indexes) return callback()
   var collections = Object.keys(config.db.indexes)
   var indexCalls = []
   var toIndex = 0
@@ -73,7 +73,7 @@ function DbWrapper(config) {
   this.getConnectedDb = getResource(function(callback) {
     var _callback = callback
     callback = function(err,db){
-      setupIndexes(db,_callback.bind(this,err,db))
+      setupIndexes(db,config,_callback.bind(this,err,db))
     }
     db.open(function(err) {
       if (err) return callback(err)
@@ -94,9 +94,13 @@ DbWrapper.prototype.add = function(collection, alias) {
   return this
 }
 
+var dbs = {}
 module.exports = {
-  config: function(options) { config = options },
-  db: new DbWrapper(config.db),
+  db: function(config) {
+    var id = config.name + '@' + config.host + ':' + config.port
+    if (!dbs[id]) dbs[id] = new DbWrapper(config)
+    return dbs[id]
+  },
   ObjectID: mongo.ObjectID,
   errorCodes: {
     dupKey: 11000
