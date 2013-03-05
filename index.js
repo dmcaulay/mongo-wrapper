@@ -94,10 +94,9 @@ DbWrapper.prototype.add = function(collection, alias) {
   return this
 }
 
-var dbs = {}
-module.exports = {
-  db: function(config) {
-    var id = config.name + '@' + config.host + ':' + config.port
+var dbs = module.exports = {
+  setup: function(config) {
+    var id = config.id || (config.name + '@' + config.host + ':' + config.port)
     if (!dbs[id]) dbs[id] = new DbWrapper(config)
     return dbs[id]
   },
