@@ -43,7 +43,7 @@ CollectionWrapper.prototype.findArray = function() {
 
 // sets up simple indexes based on the config object.
 var setupIndexes = function(db,config,callback){
-  if(!config.indexes) return callback()
+  if(!config.db.indexes) return callback()
   var collections = Object.keys(config.db.indexes)
   var indexCalls = []
   var toIndex = 0
