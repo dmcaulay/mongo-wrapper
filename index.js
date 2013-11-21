@@ -46,7 +46,7 @@ CollectionWrapper.prototype.findById = function() {
   var id = args.shift()
   if (_.isString(id)) id = new mongo.ObjectID(id)
   args.unshift({_id: id})
-  this.find.apply(this, args)
+  this.findOne.apply(this, args)
 }
 
 // sets up simple indexes based on the config object.
