@@ -41,12 +41,22 @@ CollectionWrapper.prototype.findArray = function() {
   this.find.apply(this, args)
 }
 
-CollectionWrapper.prototype.findById = function() {
-  var args = Array.prototype.slice.call(arguments)
+var addIdQuery = function(args) {
+  args = Array.prototype.slice.call(args)
   var id = args.shift()
   if (_.isString(id)) id = new mongo.ObjectID(id)
   args.unshift({_id: id})
+  return args
+}
+
+CollectionWrapper.prototype.findById = function() {
+  var args = addIdQuery(arguments)
   this.findOne.apply(this, args)
+}
+
+CollectionWrapper.prototype.updateById = function() {
+  var args = addIdQuery(arguments)
+  this.update.apply(this, args)
 }
 
 // sets up simple indexes based on the config object.
