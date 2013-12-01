@@ -54,6 +54,11 @@ CollectionWrapper.prototype.findById = function() {
   this.findOne.apply(this, args)
 }
 
+CollectionWrapper.prototype.findAndModifyById = function() {
+  var args = addIdQuery(arguments)
+  this.findAndModify.apply(this, args)
+}
+
 CollectionWrapper.prototype.updateById = function() {
   var args = addIdQuery(arguments)
   this.update.apply(this, args)
