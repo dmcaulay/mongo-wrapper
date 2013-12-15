@@ -119,7 +119,7 @@ DbWrapper.prototype.add = function(collection, alias) {
 
 DbWrapper.prototype.id = function(_id) {
   try {
-    return new ObjectID(_id);
+    return new mongo.ObjectID(_id);
   } catch(err) {
     this.lastErr = err;
     return false;
