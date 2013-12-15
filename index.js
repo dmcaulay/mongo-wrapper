@@ -117,22 +117,21 @@ DbWrapper.prototype.add = function(collection, alias) {
   return this
 }
 
-var lastErr;
+DbWrapper.prototype.id = function(_id) {
+  try {
+    return new ObjectID(_id);
+  } catch(err) {
+    this.lastErr = err;
+    return false;
+  }
+};
+
 var dbs = module.exports = {
   setup: function(config) {
     var id = config.id || (config.name + '@' + config.host + ':' + config.port)
     if (!dbs[id]) dbs[id] = new DbWrapper(config)
     return dbs[id]
   },
-  id: function(_id) {
-    try {
-      return new ObjectID(_id);
-    } catch(err) {
-      lastErr = err;
-      return false;
-    }
-  },
-  lastErr: lastErr,
   errorCodes: {
     dupKey: 11000
   }
