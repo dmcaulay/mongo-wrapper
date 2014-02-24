@@ -115,10 +115,11 @@ var setup = function(config) {
       url += option + '=' + config.options[option];
     });
   };
-  return new DbWrapper(url, config.indexes);
+  wrapper.db = new DbWrapper(url, config.indexes);
+  return wrapper.db;
 };
 
-module.exports = {
+var wrapper = module.exports = {
   setup: setup,
   errorCodes: {
     dupKey: 11000
