@@ -1,32 +1,26 @@
 
+var async = require('async');
 var mongo = require('mongodb')
-var Server = mongo.Server
-var Db = mongo.Db
-var ReadPreference = mongo.ReadPreference
-var collectionMethods = Object.keys(require('mongodb').Collection.prototype)
+var MongoClient = mongo.MongoClient;
+var collectionMethods = Object.keys(require('mongodb').Collection.prototype);
 var getResource = require('async-resource').get
 var _ = require('underscore')
-var config
 
 function CollectionWrapper(name, getConnectedDb) {
-  function mongoCollection(callback) {
-    getConnectedDb(function(err, db) {
-      if (err) return callback(err)
-      db.collection(name, {readPreference:'secondary'}, callback)
-    })
-  }
-
-  this.get = getResource(mongoCollection)
+  this.name = name;
+  this.getConnectedDb = getConnectedDb;
 }
 
 collectionMethods.forEach(function(method) {
   CollectionWrapper.prototype[method] = function() {
-    var callback = _.last(arguments)
-    var args = arguments
-    this.get(function(err, collection) {
-      if (err) return callback(err)
-      collection[method].apply(collection, args)
-    })
+    var callback = _.last(arguments);
+    var args = arguments;
+    var name = this.name;
+    this.getConnectedDb(function(err, db) {
+      if (err) return callback(err);
+      var collection = db.collection(name);
+      collection[method].apply(collection, args);
+    });
   }
 })
 
@@ -65,55 +59,33 @@ CollectionWrapper.prototype.updateById = function() {
 }
 
 // sets up simple indexes based on the config object.
-var setupIndexes = function(db,config,callback){
-  if(!config.indexes) return callback()
-  var collections = Object.keys(config.indexes)
-  var indexCalls = []
-  var toIndex = 0
-  var completedIndex = function(err){
-    if(err) console.log('failed creating index',err)
-    if(--toIndex == 0) callback()
-  }
-  // build the calls
-  collections.forEach(function(coll){
-    var indexes = config.indexes[coll]
-    indexes.forEach(function(index){
-      toIndex ++
-      if (_.isObject(index)) indexCalls.push([coll,index.index,index.options||{},completedIndex])
-      else indexCalls.push([coll,index,{},completedIndex])
-    })
-  })
-  // ensure indexes
-  indexCalls.forEach(function(call){
-    db.ensureIndex.apply(db,call)
-  })
-}
+var setupIndexes = function(db, indexes, callback) {
+  var collections = Object.keys(indexes);
+  async.each(collections, function(col, collectionDone) {
+    async.each(indexes[col], function(index, indexDone) {
+      db.ensureIndex(index.index, index.options || {}, indexDone);
+    }, collectionDone);
+  }, callback);
+};
 
-function DbWrapper(config) {
-  var server = new Server(config.host, config.port, {auto_reconnect: true})
-  var db = new Db(config.name, server, {safe: true})
-
+function DbWrapper(url, indexes) {
+  var wrapper = this;
   this.getConnectedDb = getResource(function(callback) {
-    var _callback = callback
-    callback = function(err,db){
-      setupIndexes(db,config,_callback.bind(this,err,db))
-    }
-    db.open(function(err) {
+    MongoClient.connect(url, function(err, db) {
       if (err) return callback(err)
-      if (!config.auth) return callback(null, db)
-      db.authenticate(config.user, config.pass, function(err, authenticated) {
-        if (err) return callback(err)
-        if (!authenticated) return callback(new Error('mongodb: invalid credentials'))
-        callback(null, db)
-      })
-    })
+      wrapper.db = db;
+      if (!indexes) return callback(null, db);
+      setupIndexes(db, indexes, function(err) {
+        callback(err, db);
+      });
+    });
   })
-}
+};
 
 DbWrapper.prototype.add = function(collection, alias) {
   alias = alias || collection
   if (this[alias]) return this
-  this[alias] = new CollectionWrapper(collection, this.getConnectedDb.bind(this))
+  this[alias] = new CollectionWrapper(collection, this.getConnectedDb.bind(this));
   return this
 }
 
@@ -126,12 +98,28 @@ DbWrapper.prototype.id = function(_id) {
   }
 };
 
-var dbs = module.exports = {
-  setup: function(config) {
-    var id = config.id || (config.name + '@' + config.host + ':' + config.port)
-    if (!dbs[id]) dbs[id] = new DbWrapper(config)
-    return dbs[id]
-  },
+var setup = function(config) {
+  var url = 'mongodb://';
+  if (config.username) url += config.username + ':' + config.password + '@';
+  if (config.hosts) {
+    config.hosts.forEach(function(host) {
+      url += host.name + ':' + (host.port || 27017);
+    });
+  } else {
+    url += 'localhost';
+  }
+  url += '/' + (config.database + '');
+  if (config.options) {
+    Object.keys(config.options).forEach(function(option, i) {
+      url += i == 0 ? '?' : '&';
+      url += option + '=' + config.options[option];
+    });
+  };
+  return new DbWrapper(url, config.indexes);
+};
+
+module.exports = {
+  setup: setup,
   errorCodes: {
     dupKey: 11000
   }
