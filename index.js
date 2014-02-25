@@ -63,19 +63,19 @@ var setupIndexes = function(db, indexes, callback) {
   var collections = Object.keys(indexes);
   async.each(collections, function(col, collectionDone) {
     async.each(indexes[col], function(index, indexDone) {
-      db.ensureIndex(index.index, index.options || {}, indexDone);
+      db.ensureIndex(col, index.index, index.options || {}, indexDone);
     }, collectionDone);
   }, callback);
 };
 
-function DbWrapper(url, indexes) {
+function DbWrapper(url, config) {
   var wrapper = this;
   this.getConnectedDb = getResource(function(callback) {
     MongoClient.connect(url, function(err, db) {
       if (err) return callback(err)
       wrapper.db = db;
-      if (!indexes) return callback(null, db);
-      setupIndexes(db, indexes, function(err) {
+      if (!config.indexes) return callback(null, db);
+      setupIndexes(db, config.indexes, function(err) {
         callback(err, db);
       });
     });
@@ -102,7 +102,8 @@ var setup = function(config) {
   var url = 'mongodb://';
   if (config.username) url += config.username + ':' + config.password + '@';
   if (config.hosts) {
-    config.hosts.forEach(function(host) {
+    config.hosts.forEach(function(host, i) {
+      if (i != 0) url += ',';
       url += host.name + ':' + (host.port || 27017);
     });
   } else {
@@ -115,7 +116,8 @@ var setup = function(config) {
       url += option + '=' + config.options[option];
     });
   };
-  wrapper.db = new DbWrapper(url, config.indexes);
+  console.log('mongo connection url:', url);
+  wrapper.db = new DbWrapper(url, config);
   return wrapper.db;
 };
 
