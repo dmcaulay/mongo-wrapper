@@ -98,6 +98,12 @@ DbWrapper.prototype.id = function(_id) {
   }
 };
 
+DbWrapper.prototype.close = function() {
+  this.getConnectedDb(function(err, db) {
+    db.close();
+  });
+};
+
 var setup = function(config) {
   var url = 'mongodb://';
   if (config.username) url += config.username + ':' + config.password + '@';
