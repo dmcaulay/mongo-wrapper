@@ -37,6 +37,7 @@ var config = {
 
 db = mongo.setup(config);
 
+// add your collections
 db.add('users');
 ```
 
