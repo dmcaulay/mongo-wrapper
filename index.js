@@ -58,6 +58,13 @@ CollectionWrapper.prototype.updateById = function() {
   this.update.apply(this, args)
 }
 
+CollectionWrapper.prototype.bind = function() {
+  var args = Array.prototype.slice.call(arguments);
+  var method = this[args.shift()];
+  args.unshift(this);
+  return method.bind.call(method, args);
+};
+
 // sets up simple indexes based on the config object.
 var setupIndexes = function(db, indexes, callback) {
   var collections = Object.keys(indexes);
