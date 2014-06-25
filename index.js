@@ -24,6 +24,16 @@ collectionMethods.forEach(function(method) {
   }
 })
 
+CollectionWrapper.prototype.bind = function() {
+  var args = Array.prototype.slice.call(arguments);
+  var self = this;
+  var method = self[args.shift()];
+  return function() {
+    args.push.apply(args, arguments);
+    method.apply(self, args);
+  }
+};
+
 CollectionWrapper.prototype.findArray = function() {
   var args = Array.prototype.slice.call(arguments)
   var callback = args.pop()
@@ -57,13 +67,6 @@ CollectionWrapper.prototype.updateById = function() {
   var args = addIdQuery(arguments)
   this.update.apply(this, args)
 }
-
-CollectionWrapper.prototype.bind = function() {
-  var args = Array.prototype.slice.call(arguments);
-  var method = this[args.shift()];
-  args.unshift(this);
-  return method.bind.call(method, args);
-};
 
 // sets up simple indexes based on the config object.
 var setupIndexes = function(db, indexes, callback) {

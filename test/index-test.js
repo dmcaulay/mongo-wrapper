@@ -35,5 +35,17 @@ describe('mongo-wrapper', function() {
         })
       })
     })
+
+    it('contains a bind function', function(done) {
+      db.add('tests');
+      db.tests.bind('insert', {name: 'test-bind'})(function(err) {
+        assert.ifError(err)
+        db.tests.findOne({name: 'test-bind'}, function(err, test) {
+          assert.ifError(err)
+          assert.equal(test.name, 'test-bind')
+          done()
+        })
+      });
+    });
   })
 })
