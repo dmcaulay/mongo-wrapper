@@ -79,6 +79,18 @@ db.users.findById('53683ca19c49151345e479ad', function(err, user) {
 });
 ```
 
+### bind()
+
+```js
+// This allows you to bind a function on a collection so you can
+// easily use mongo-wrapper with libraries like async
+var user_id = db.id('53683ca19c49151345e479ad');
+async.parallel({
+  user: db.users.bind('findById', user_id),
+  reservations: db.reservations.bind('findArray', {user_id: user_id})
+}, callback);
+```
+
 #### db.id()
 
 ```js
@@ -87,4 +99,3 @@ db.id(); // creates a new ObjectId
 db.id('53683ca19c49151345e479ad'); // creates the ObjectId
 db.id('invalid id'); // returns null
 ```
-
