@@ -132,7 +132,6 @@ var setup = function(config) {
       url += option + '=' + config.options[option];
     });
   };
-  console.log('mongo connection url:', url);
   wrapper.db = new DbWrapper(url, config);
   return wrapper.db;
 };
